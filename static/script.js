@@ -1,167 +1,209 @@
 const form = document.getElementById("predictionForm");
 
 const predictBtn = document.getElementById("predictBtn");
-const btnText = document.getElementById("btnText");
+const buttonText = document.getElementById("buttonText");
 const loader = document.getElementById("loader");
 
 const resultCard = document.getElementById("resultCard");
 const resultTitle = document.getElementById("resultTitle");
-const resultText = document.getElementById("resultText");
+const resultMessage = document.getElementById("resultMessage");
+
 const probabilityValue = document.getElementById("probabilityValue");
 const progressBar = document.getElementById("progressBar");
 const riskBadge = document.getElementById("riskBadge");
 const resultIcon = document.getElementById("resultIcon");
 
 
-form.addEventListener("submit", async function (event) {
+// Check whether form exists
+if (form) {
 
-    event.preventDefault();
+    form.addEventListener("submit", async function (event) {
 
-    // Show loading state
-    predictBtn.disabled = true;
-    btnText.textContent = "Analyzing...";
-    loader.style.display = "inline-block";
+        event.preventDefault();
 
-    // Collect form data
-    const data = {
-
-        gender: document.getElementById("gender").value,
-
-        SeniorCitizen:
-            document.getElementById("SeniorCitizen").value,
-
-        Partner:
-            document.getElementById("Partner").value,
-
-        Dependents:
-            document.getElementById("Dependents").value,
-
-        tenure:
-            document.getElementById("tenure").value,
-
-        PhoneService:
-            document.getElementById("PhoneService").value,
-
-        MultipleLines:
-            document.getElementById("MultipleLines").value,
-
-        InternetService:
-            document.getElementById("InternetService").value,
-
-        OnlineSecurity:
-            document.getElementById("OnlineSecurity").value,
-
-        OnlineBackup:
-            document.getElementById("OnlineBackup").value,
-
-        DeviceProtection:
-            document.getElementById("DeviceProtection").value,
-
-        TechSupport:
-            document.getElementById("TechSupport").value,
-
-        StreamingTV:
-            document.getElementById("StreamingTV").value,
-
-        StreamingMovies:
-            document.getElementById("StreamingMovies").value,
-
-        Contract:
-            document.getElementById("Contract").value,
-
-        PaperlessBilling:
-            document.getElementById("PaperlessBilling").value,
-
-        PaymentMethod:
-            document.getElementById("PaymentMethod").value,
-
-        MonthlyCharges:
-            document.getElementById("MonthlyCharges").value,
-
-        TotalCharges:
-            document.getElementById("TotalCharges").value
-    };
+        // Loading state
+        predictBtn.disabled = true;
+        buttonText.textContent = "Analyzing...";
+        loader.style.display = "inline-block";
 
 
-    try {
+        // Collect form data
+        const data = {
 
-        const response = await fetch("/predict", {
+            gender: document.getElementById("gender").value,
 
-            method: "POST",
+            SeniorCitizen:
+                document.getElementById("SeniorCitizen").value,
 
-            headers: {
-                "Content-Type": "application/json"
-            },
+            Partner:
+                document.getElementById("Partner").value,
 
-            body: JSON.stringify(data)
-        });
+            Dependents:
+                document.getElementById("Dependents").value,
+
+            tenure:
+                document.getElementById("tenure").value,
+
+            PhoneService:
+                document.getElementById("PhoneService").value,
+
+            MultipleLines:
+                document.getElementById("MultipleLines").value,
+
+            InternetService:
+                document.getElementById("InternetService").value,
+
+            OnlineSecurity:
+                document.getElementById("OnlineSecurity").value,
+
+            OnlineBackup:
+                document.getElementById("OnlineBackup").value,
+
+            DeviceProtection:
+                document.getElementById("DeviceProtection").value,
+
+            TechSupport:
+                document.getElementById("TechSupport").value,
+
+            StreamingTV:
+                document.getElementById("StreamingTV").value,
+
+            StreamingMovies:
+                document.getElementById("StreamingMovies").value,
+
+            Contract:
+                document.getElementById("Contract").value,
+
+            PaperlessBilling:
+                document.getElementById("PaperlessBilling").value,
+
+            PaymentMethod:
+                document.getElementById("PaymentMethod").value,
+
+            MonthlyCharges:
+                document.getElementById("MonthlyCharges").value,
+
+            TotalCharges:
+                document.getElementById("TotalCharges").value
+        };
 
 
-        const result = await response.json();
+        try {
+
+            // Send data to Flask
+            const response = await fetch(
+                "http://127.0.0.1:5000/predict",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(data)
+                }
+            );
 
 
-        if (!result.success) {
-            throw new Error(result.error);
+            const result = await response.json();
+
+
+            // Check Flask response
+            if (!response.ok || !result.success) {
+
+                throw new Error(
+                    result.error || "Prediction failed."
+                );
+            }
+
+
+            // Show result card
+            resultCard.classList.remove("hidden");
+
+
+            // Result title
+            resultTitle.textContent = result.result;
+
+
+            // Result message
+            resultMessage.textContent =
+                "The model has analyzed the customer information and estimated the churn risk.";
+
+
+            // Churn probability
+            probabilityValue.textContent =
+                result.probability + "%";
+
+
+            // Progress bar
+            progressBar.style.width =
+                result.probability + "%";
+
+
+            // Risk badge
+            riskBadge.textContent =
+                result.risk;
+
+
+            // High Risk
+            if (result.prediction === "Yes") {
+
+                resultIcon.textContent = "!";
+
+                resultIcon.style.background = "#450a0a";
+                resultIcon.style.color = "#f87171";
+
+                riskBadge.style.background = "#450a0a";
+                riskBadge.style.color = "#f87171";
+                riskBadge.style.borderColor = "#7f1d1d";
+
+            }
+
+
+            // Low Risk
+            else {
+
+                resultIcon.textContent = "✓";
+
+                resultIcon.style.background = "#052e16";
+                resultIcon.style.color = "#4ade80";
+
+                riskBadge.style.background = "#052e16";
+                riskBadge.style.color = "#4ade80";
+                riskBadge.style.borderColor = "#166534";
+            }
+
+
+            // Scroll to result
+            resultCard.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+
         }
 
+        catch (error) {
 
-        // Display result
-        resultCard.classList.remove("hidden");
+            console.error("Prediction Error:", error);
 
-        resultTitle.textContent = result.result;
+            alert(
+                "Prediction Error: " + error.message
+            );
 
-        resultText.textContent =
-            "The model has analyzed the customer information and estimated the churn risk.";
-
-        probabilityValue.textContent =
-            result.probability + "%";
-
-        progressBar.style.width =
-            result.probability + "%";
-
-        riskBadge.textContent =
-            result.risk;
-
-
-        // Result styling
-        if (result.prediction === "Yes") {
-
-            resultIcon.textContent = "!";
-
-            resultIcon.style.background = "#fff0f0";
-            resultIcon.style.color = "#d93636";
-
-            riskBadge.style.background = "#fff0f0";
-            riskBadge.style.color = "#d93636";
-
-        } else {
-
-            resultIcon.textContent = "✓";
-
-            resultIcon.style.background = "#eaf7ee";
-            resultIcon.style.color = "#23934d";
-
-            riskBadge.style.background = "#eaf7ee";
-            riskBadge.style.color = "#23934d";
         }
 
+        finally {
 
-        // Scroll to result
-        resultCard.scrollIntoView({
-            behavior: "smooth",
-            block: "center"
-        });
+            // Reset button
+            predictBtn.disabled = false;
 
+            buttonText.textContent =
+                "Predict Customer Churn";
 
-    } catch (error) {
+            loader.style.display = "none";
+        }
 
-        alert("Prediction Error: " + error.message);
+    });
 
-    } finally {
-
-        predictBtn.disabled = false;
-        btnText.textContent = "Predict Customer Churn";
-        loader.style.display = "none";
-    }
-
-});
+}

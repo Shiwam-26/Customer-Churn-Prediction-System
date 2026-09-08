@@ -1,9 +1,14 @@
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 import pandas as pd
 import joblib
 
 app = Flask(__name__)
 
+# Allow requests from Live Server
+CORS(app)
+
+# Load trained model
 model = joblib.load("customer_churn_logistic_model.pkl")
 
 
@@ -40,14 +45,18 @@ def predict():
             "TotalCharges": float(data["TotalCharges"])
         }])
 
+        # Prediction
         prediction = model.predict(customer_data)[0]
 
+        # Probability
         probabilities = model.predict_proba(customer_data)[0]
         classes = model.classes_
 
+        # Find probability of Yes
         churn_index = list(classes).index("Yes")
         churn_probability = probabilities[churn_index] * 100
 
+        # Result
         if prediction == "Yes":
             result = "Customer is likely to CHURN"
             risk = "High Risk"
@@ -64,6 +73,9 @@ def predict():
         })
 
     except Exception as e:
+
+        print("Prediction Error:", str(e))
+
         return jsonify({
             "success": False,
             "error": str(e)
@@ -71,4 +83,8 @@ def predict():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=True
+    )
